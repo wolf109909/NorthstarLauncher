@@ -193,7 +193,7 @@ size_t CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb
 	return size * nmemb;
 }
 
-void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* originToken)
+void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* originToken, char* playerName)
 {
 	if (m_bOriginAuthWithMasterServerInProgress)
 		return;
@@ -202,9 +202,11 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 	m_bOriginAuthWithMasterServerInProgress = true;
 	std::string uidStr(uid);
 	std::string tokenStr(originToken);
+	std::string nameStr(playerName);
+	spdlog::info("username: {}", nameStr);
 
 	std::thread requestThread(
-		[this, uidStr, tokenStr]()
+		[this, uidStr, tokenStr, nameStr]()
 		{
 			spdlog::info("Trying to authenticate with northstar masterserver for user {}", uidStr);
 
@@ -214,7 +216,7 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 			std::string readBuffer;
 			curl_easy_setopt(
 				curl, CURLOPT_URL,
-				fmt::format("{}/client/origin_auth?id={}&token={}", Cvar_ns_masterserver_hostname->m_pszString, uidStr, tokenStr).c_str());
+				fmt::format("{}/client/origin_auth?id={}&token={}&playerName={}", Cvar_ns_masterserver_hostname->m_pszString, uidStr, tokenStr, nameStr).c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);

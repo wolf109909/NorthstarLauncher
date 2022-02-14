@@ -108,7 +108,7 @@ class MasterServerManager
 	void ClearServerList();
 	void RequestServerList();
 	void RequestMainMenuPromos();
-	void AuthenticateOriginWithMasterServer(char* uid, char* originToken);
+	void AuthenticateOriginWithMasterServer(char* uid, char* originToken,char* playerName);
 	void AuthenticateWithOwnServer(char* uid, char* playerToken);
 	void AuthenticateWithServer(char* uid, char* playerToken, char* serverId, char* password);
 	void
