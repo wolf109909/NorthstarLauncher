@@ -11,6 +11,7 @@
 #include "rapidjson/error/en.h"
 #include "modmanager.h"
 #include "misccommands.h"
+#include "bansystem.h"
 #include <cstring>
 #include <regex>
 // NOTE for anyone reading this: we used to use httplib for requests here, but it had issues, so we're moving to curl now for masterserver
@@ -191,6 +192,107 @@ size_t CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb
 {
 	((std::string*)userp)->append((char*)contents, size * nmemb);
 	return size * nmemb;
+}
+void MasterServerManager::RemoteBanlistProcessingFunc() 
+{
+		UpdateBanlistVersionStringFromMasterserver();
+		if (LocalBanlistVersion != RemoteBanlistVersion) 
+		{
+			GetBanlistFromMasterserver();
+		}
+		g_ServerBanSystem->ParseRemoteBanlistString(RemoteBanlistString);
+		
+}
+void MasterServerManager::GetBanlistFromMasterserver() 
+{
+	std::thread requestThread(
+		[this]()
+		{
+			// make sure we never have 2 threads writing at once
+			// please don't fuck up the threads Orz
+			while (m_RequestingRemoteBanlist)
+				Sleep(100);
+
+			m_RequestingRemoteBanlist = true;
+
+			spdlog::info("Getting banlist content from {}", Cvar_ns_masterserver_hostname->m_pszString);
+
+			CURL* curl = curl_easy_init();
+
+			std::string readBuffer;
+			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/banlist", Cvar_ns_masterserver_hostname->m_pszString).c_str());
+			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+			CURLcode result = curl_easy_perform(curl);
+
+			if (result == CURLcode::CURLE_OK)
+			{
+				m_successfullyConnected = true;
+				std::string BanlistString = readBuffer.c_str();
+				spdlog::info("Got remote banlist string:{}", BanlistString);
+				RemoteBanlistString = BanlistString;
+			}
+			else
+			{
+				spdlog::error("Failed requesting remote banlist: error {}", curl_easy_strerror(result));
+				m_successfullyConnected = false;
+			}
+
+
+		REQUEST_END_CLEANUP:
+			m_RequestingRemoteBanlist = false;
+			curl_easy_cleanup(curl);
+		});
+
+	requestThread.detach();
+}
+
+void MasterServerManager::UpdateBanlistVersionStringFromMasterserver()
+{
+	std::thread requestThread(
+		[this]()
+		{
+			// make sure we never have 2 threads writing at once
+			// please don't fuck up the threads Orz
+			while (m_RequestingRemoteBanlistVersion)
+				Sleep(100);
+
+			m_RequestingRemoteBanlistVersion = true;
+
+			spdlog::info("Requesting banlist version from {}", Cvar_ns_masterserver_hostname->m_pszString);
+
+			CURL* curl = curl_easy_init();
+
+			std::string readBuffer;
+			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/update_banlist", Cvar_ns_masterserver_hostname->m_pszString).c_str());
+			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+			CURLcode result = curl_easy_perform(curl);
+
+			if (result == CURLcode::CURLE_OK)
+			{
+				m_successfullyConnected = true;
+				RemoteBanlistVersion = readBuffer.c_str();
+				spdlog::info("Got remote banlist version:{}", RemoteBanlistVersion);
+			}
+			else
+			{
+				spdlog::error("Failed requesting remote banlist version: error {}", curl_easy_strerror(result));
+				m_successfullyConnected = false;
+			}
+
+
+		REQUEST_END_CLEANUP:
+			m_RequestingRemoteBanlistVersion = false;
+			curl_easy_cleanup(curl);
+		});
+
+	requestThread.detach();
+
 }
 
 void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* originToken, char* playerName)
@@ -975,6 +1077,7 @@ void MasterServerManager::AddSelfToServerList(
 										m_ownServerAuthToken[sizeof(m_ownServerAuthToken) - 1] = 0;
 									}
 								}
+								RemoteBanlistProcessingFunc();
 							}
 							else
 								spdlog::warn("Heartbeat failed with error {}", curl_easy_strerror(result));

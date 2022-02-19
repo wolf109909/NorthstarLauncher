@@ -69,12 +69,15 @@ class MasterServerManager
   private:
 	bool m_requestingServerList = false;
 	bool m_authenticatingWithGameServer = false;
-
+	bool m_RequestingRemoteBanlistVersion = false;
+	bool m_RequestingRemoteBanlist = false;
   public:
 	char m_ownServerId[33];
 	char m_ownServerAuthToken[33];
 	char m_ownClientAuthToken[33];
-
+	std::string RemoteBanlistString;
+	std::string LocalBanlistVersion;
+	std::string RemoteBanlistVersion;
 	std::string m_ownModInfoJson;
 	std::string ns_auth_srvName; // Unicode unescaped version of Cvar_ns_auth_servername for support in cjk characters
 	std::string ns_auth_srvDesc; // Unicode unescaped version of Cvar_ns_auth_serverdesc for support in cjk characters
@@ -117,10 +120,14 @@ class MasterServerManager
 	void UpdateServerPlayerCount(int playerCount);
 	void WritePlayerPersistentData(char* playerId, char* pdata, size_t pdataSize);
 	void RemoveSelfFromServerList();
+	void UpdateBanlistVersionStringFromMasterserver();
+	void GetBanlistFromMasterserver();
+	void RemoteBanlistProcessingFunc();
+
 };
 std::string unescape_unicode(const std::string& str);
 void UpdateServerInfoFromUnicodeToUTF8();
 void InitialiseSharedMasterServer(HMODULE baseAddress);
-
 extern MasterServerManager* g_MasterServerManager;
 extern ConVar* Cvar_ns_masterserver_hostname;
+//extern size_t CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb, void* userp);

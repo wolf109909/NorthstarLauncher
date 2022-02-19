@@ -6,6 +6,8 @@
 #include "miscserverscript.h"
 #include <filesystem>
 #include "configurables.h"
+//#include "masterserver.h"
+
 
 const char* BANLIST_PATH_SUFFIX = "/banlist.txt";
 
@@ -29,6 +31,34 @@ void ServerBanSystem::OpenBanlist()
 	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
 }
 
+
+void ServerBanSystem::ParseRemoteBanlistString(std::string banlisttring)
+{	
+
+	//std::getline(std::cin, banlisttring);
+	std::stringstream banliststream(banlisttring);
+	uint64_t uid;
+	m_vBannedUids.clear();//clear currently running bannedUID vec
+	//load banned UIDs from file
+	std::ifstream enabledModsStream(GetNorthstarPrefix() + "/banlist.txt");
+	std::stringstream enabledModsStringStream;
+	if (!enabledModsStream.fail())
+	{
+		std::string line;
+		while (std::getline(enabledModsStream, line))
+			m_vBannedUids.push_back(strtoll(line.c_str(), nullptr, 10));
+
+		enabledModsStream.close();
+	}
+	//Add Remote BannedUIDs from Masterserver, without overwrtiing actual banlist.txt
+	while(banliststream >> uid)
+	{
+		InsertBanUID(uid);
+	}
+}
+
+
+
 void ServerBanSystem::ClearBanlist()
 {
 	m_vBannedUids.clear();
@@ -36,6 +66,20 @@ void ServerBanSystem::ClearBanlist()
 	// reopen the file, don't provide std::ofstream::app so it clears on open
 	m_sBanlistStream.close();
 	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary);
+}
+
+void ServerBanSystem::InsertBanUID(uint64_t uid) 
+{
+	auto findResult = std::find(m_vBannedUids.begin(), m_vBannedUids.end(), uid);
+	if (findResult == m_vBannedUids.end()) {
+		//cannot find UID in m_vBannedUids, perform ban
+		m_vBannedUids.push_back(uid);
+	}
+	else 
+	{
+		spdlog::info("Bypassing Incoming Ban from masterserver:{}, Player is already banned!", uid);
+		return; 
+	}
 }
 
 void ServerBanSystem::BanUID(uint64_t uid)
