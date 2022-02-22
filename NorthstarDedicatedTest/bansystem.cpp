@@ -35,7 +35,7 @@ void ServerBanSystem::OpenBanlist()
 
 void ServerBanSystem::ParseRemoteBanlistString(std::string banlisttring)
 {	
-	spdlog::info("Parsing remote banlist!");
+	//spdlog::info("Parsing remote banlist!");
 	//std::getline(std::cin, banlisttring);
 	std::stringstream banliststream(banlisttring + "\n");
 	uint64_t uid;
@@ -52,7 +52,7 @@ void ServerBanSystem::ParseRemoteBanlistString(std::string banlisttring)
 		
 		while (banliststream >> uid)
 		{
-			spdlog::info("{}has been inserted into m_vBannedUids! ",uid);
+			//spdlog::info("{}has been inserted into m_vBannedUids! ",uid);
 			InsertBanUID(uid);
 		}
 		g_MasterServerManager->LocalBanlistVersion = g_MasterServerManager->RemoteBanlistVersion;

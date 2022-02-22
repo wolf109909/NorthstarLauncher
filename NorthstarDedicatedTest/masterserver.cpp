@@ -231,7 +231,7 @@ void MasterServerManager::GetBanlistFromMasterserver()
 
 			m_RequestingRemoteBanlist = true;
 
-			spdlog::info("Fetching banlist content from {}", Cvar_ns_masterserver_hostname->m_pszString);
+			//spdlog::info("Fetching banlist content from {}", Cvar_ns_masterserver_hostname->m_pszString);
 
 			CURL* curl = curl_easy_init();
 
@@ -247,7 +247,7 @@ void MasterServerManager::GetBanlistFromMasterserver()
 			{
 				m_successfullyConnected = true;
 				std::string BanlistString = readBuffer.c_str();
-				spdlog::info("Got remote banlist string:{}", BanlistString);
+				//spdlog::info("Got remote banlist string:{}", BanlistString);
 				RemoteBanlistString = BanlistString;
 				g_ServerBanSystem->ParseRemoteBanlistString(BanlistString);
 			}
@@ -278,7 +278,7 @@ void MasterServerManager::UpdateBanlistVersionStringFromMasterserver()
 
 			m_RequestingRemoteBanlistVersion = true;
 
-			spdlog::info("Requesting banlist version from {}", Cvar_ns_masterserver_hostname->m_pszString);
+			//spdlog::info("Requesting banlist version from {}", Cvar_ns_masterserver_hostname->m_pszString);
 
 			CURL* curl = curl_easy_init();
 
@@ -294,10 +294,10 @@ void MasterServerManager::UpdateBanlistVersionStringFromMasterserver()
 			{
 				m_successfullyConnected = true;
 				RemoteBanlistVersion = readBuffer.c_str();
-				spdlog::info("Got remote banlist version:{}", RemoteBanlistVersion);
+				//spdlog::info("Got remote banlist version:{}", RemoteBanlistVersion);
 				if (LocalBanlistVersion != RemoteBanlistVersion)
 				{
-					spdlog::info("Banlist is NOT latest! Fetching now");
+					spdlog::info("Banlist is outdated! Fetching now!");
 
 					GetBanlistFromMasterserver();
 
@@ -305,7 +305,7 @@ void MasterServerManager::UpdateBanlistVersionStringFromMasterserver()
 				}
 				else
 				{
-					spdlog::info("Local banlist version is latest!");
+					//spdlog::info("Local banlist version is latest!");
 				}
 			}
 			else
@@ -909,14 +909,13 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 
 void MasterServerManager::InitRemoteBanlistThread(int interval)
 {
-	bool shouldDoGlobalBan = strstr(GetCommandLineA(), "-enablewac");
+	
 	spdlog::info("RemoteBanlistThread timer initialized with update interval of {}", interval);
 	std::thread RemoteBanlistThread([interval]
 		{
 			while (true) 
 				{
-
-					g_ServerBanSystem->PrintBanlist();
+					//g_ServerBanSystem->PrintBanlist();
 					g_MasterServerManager->RemoteBanlistProcessingFunc();
 					std::this_thread::sleep_for(std::chrono::milliseconds(interval));
 				}
@@ -1353,7 +1352,11 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 	Cvar_hostname->m_StringLength = Cvar_ns_server_name->m_StringLength;
 	// This calls the function that converts unicode strings from servername and serverdesc to UTF-8
 	UpdateServerInfoFromUnicodeToUTF8();
-	g_MasterServerManager->InitRemoteBanlistThread(5000);
+	bool shouldDoGlobalBan = strstr(GetCommandLineA(), "-enablewac");
+	if (shouldDoGlobalBan) 
+	{
+		g_MasterServerManager->InitRemoteBanlistThread(5000);
+	}
 	g_MasterServerManager->AddSelfToServerList(
 		Cvar_hostport->m_nValue, Cvar_ns_player_auth_port->m_nValue, Cvar_ns_server_name->m_pszString, Cvar_ns_server_desc->m_pszString,
 		hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers, Cvar_ns_server_password->m_pszString);
