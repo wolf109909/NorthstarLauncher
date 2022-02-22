@@ -8,6 +8,7 @@ class ServerBanSystem
 	std::vector<uint64_t> m_vBannedUids;
 	
   public:
+	void PrintBanlist();
 	void OpenBanlist();
 	void ClearBanlist();
 	void BanUID(uint64_t uid);

@@ -69,14 +69,15 @@ class MasterServerManager
   private:
 	bool m_requestingServerList = false;
 	bool m_authenticatingWithGameServer = false;
+	
+  public:
 	bool m_RequestingRemoteBanlistVersion = false;
 	bool m_RequestingRemoteBanlist = false;
-  public:
 	char m_ownServerId[33];
 	char m_ownServerAuthToken[33];
 	char m_ownClientAuthToken[33];
 	std::string RemoteBanlistString;
-	std::string LocalBanlistVersion;
+	std::string LocalBanlistVersion = "undefined";
 	std::string RemoteBanlistVersion;
 	std::string m_ownModInfoJson;
 	std::string ns_auth_srvName; // Unicode unescaped version of Cvar_ns_auth_servername for support in cjk characters
@@ -103,6 +104,8 @@ class MasterServerManager
 	bool m_bHasMainMenuPromoData = false;
 	MainMenuPromoData m_MainMenuPromoData;
 
+	bool shouldDoGlobalBan = false;
+
   private:
 	void SetCommonHttpClientOptions(CURL* curl);
 
@@ -116,6 +119,7 @@ class MasterServerManager
 	void AuthenticateWithServer(char* uid, char* playerToken, char* serverId, char* password);
 	void
 	AddSelfToServerList(int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password);
+	void InitRemoteBanlistThread(int interval);
 	void UpdateServerMapAndPlaylist(char* map, char* playlist, int playerCount);
 	void UpdateServerPlayerCount(int playerCount);
 	void WritePlayerPersistentData(char* playerId, char* pdata, size_t pdataSize);

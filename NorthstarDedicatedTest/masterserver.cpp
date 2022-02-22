@@ -42,6 +42,7 @@ CHostState__State_ChangeLevelSPType CHostState__State_ChangeLevelSP;
 typedef void (*CHostState__State_GameShutdownType)(CHostState* hostState);
 CHostState__State_GameShutdownType CHostState__State_GameShutdown;
 
+
 // Convert a hex digit char to integer.
 inline int hctod(char c)
 {
@@ -193,16 +194,31 @@ size_t CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb
 	((std::string*)userp)->append((char*)contents, size * nmemb);
 	return size * nmemb;
 }
+
 void MasterServerManager::RemoteBanlistProcessingFunc() 
 {
-		UpdateBanlistVersionStringFromMasterserver();
-		if (LocalBanlistVersion != RemoteBanlistVersion) 
-		{
-			GetBanlistFromMasterserver();
-		}
+	UpdateBanlistVersionStringFromMasterserver();
+/*
+	UpdateBanlistVersionStringFromMasterserver();
+	while (m_RequestingRemoteBanlistVersion)
+		Sleep(100);
+	if(LocalBanlistVersion != RemoteBanlistVersion)
+	{
+		spdlog::info("Banlist is NOT latest! Fetching now");
+
+		GetBanlistFromMasterserver();
+		while (m_RequestingRemoteBanlist)
+			Sleep(100);
 		g_ServerBanSystem->ParseRemoteBanlistString(RemoteBanlistString);
-		
+
+	}
+	else
+	{
+		spdlog::info("Local banlist version is latest!");
+	}
+	*/
 }
+
 void MasterServerManager::GetBanlistFromMasterserver() 
 {
 	std::thread requestThread(
@@ -215,7 +231,7 @@ void MasterServerManager::GetBanlistFromMasterserver()
 
 			m_RequestingRemoteBanlist = true;
 
-			spdlog::info("Getting banlist content from {}", Cvar_ns_masterserver_hostname->m_pszString);
+			spdlog::info("Fetching banlist content from {}", Cvar_ns_masterserver_hostname->m_pszString);
 
 			CURL* curl = curl_easy_init();
 
@@ -233,6 +249,7 @@ void MasterServerManager::GetBanlistFromMasterserver()
 				std::string BanlistString = readBuffer.c_str();
 				spdlog::info("Got remote banlist string:{}", BanlistString);
 				RemoteBanlistString = BanlistString;
+				g_ServerBanSystem->ParseRemoteBanlistString(BanlistString);
 			}
 			else
 			{
@@ -278,6 +295,18 @@ void MasterServerManager::UpdateBanlistVersionStringFromMasterserver()
 				m_successfullyConnected = true;
 				RemoteBanlistVersion = readBuffer.c_str();
 				spdlog::info("Got remote banlist version:{}", RemoteBanlistVersion);
+				if (LocalBanlistVersion != RemoteBanlistVersion)
+				{
+					spdlog::info("Banlist is NOT latest! Fetching now");
+
+					GetBanlistFromMasterserver();
+
+
+				}
+				else
+				{
+					spdlog::info("Local banlist version is latest!");
+				}
 			}
 			else
 			{
@@ -878,6 +907,24 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 	requestThread.detach();
 }
 
+void MasterServerManager::InitRemoteBanlistThread(int interval)
+{
+	bool shouldDoGlobalBan = strstr(GetCommandLineA(), "-enablewac");
+	spdlog::info("RemoteBanlistThread timer initialized with update interval of {}", interval);
+	std::thread RemoteBanlistThread([interval]
+		{
+			while (true) 
+				{
+
+					g_ServerBanSystem->PrintBanlist();
+					g_MasterServerManager->RemoteBanlistProcessingFunc();
+					std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+				}
+			});
+
+	RemoteBanlistThread.detach();
+}
+
 void MasterServerManager::AddSelfToServerList(
 	int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password)
 {
@@ -1077,7 +1124,7 @@ void MasterServerManager::AddSelfToServerList(
 										m_ownServerAuthToken[sizeof(m_ownServerAuthToken) - 1] = 0;
 									}
 								}
-								RemoteBanlistProcessingFunc();
+								
 							}
 							else
 								spdlog::warn("Heartbeat failed with error {}", curl_easy_strerror(result));
@@ -1306,7 +1353,7 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 	Cvar_hostname->m_StringLength = Cvar_ns_server_name->m_StringLength;
 	// This calls the function that converts unicode strings from servername and serverdesc to UTF-8
 	UpdateServerInfoFromUnicodeToUTF8();
-
+	g_MasterServerManager->InitRemoteBanlistThread(5000);
 	g_MasterServerManager->AddSelfToServerList(
 		Cvar_hostport->m_nValue, Cvar_ns_player_auth_port->m_nValue, Cvar_ns_server_name->m_pszString, Cvar_ns_server_desc->m_pszString,
 		hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers, Cvar_ns_server_password->m_pszString);
