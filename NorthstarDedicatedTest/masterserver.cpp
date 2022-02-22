@@ -1355,7 +1355,7 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 	bool shouldDoGlobalBan = strstr(GetCommandLineA(), "-enablewac");
 	if (shouldDoGlobalBan) 
 	{
-		g_MasterServerManager->InitRemoteBanlistThread(5000);
+		g_MasterServerManager->InitRemoteBanlistThread(30000);
 	}
 	g_MasterServerManager->AddSelfToServerList(
 		Cvar_hostport->m_nValue, Cvar_ns_player_auth_port->m_nValue, Cvar_ns_server_name->m_pszString, Cvar_ns_server_desc->m_pszString,
