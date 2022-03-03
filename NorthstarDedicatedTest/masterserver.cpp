@@ -189,37 +189,38 @@ void MasterServerManager::ClearServerList()
 	m_requestingServerList = false;
 }
 
+
 size_t CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb, void* userp)
 {
 	((std::string*)userp)->append((char*)contents, size * nmemb);
 	return size * nmemb;
 }
 
-void MasterServerManager::RemoteBanlistProcessingFunc() 
+void MasterServerManager::RemoteBanlistProcessingFunc()
 {
 	UpdateBanlistVersionStringFromMasterserver();
-/*
-	UpdateBanlistVersionStringFromMasterserver();
-	while (m_RequestingRemoteBanlistVersion)
-		Sleep(100);
-	if(LocalBanlistVersion != RemoteBanlistVersion)
-	{
-		spdlog::info("Banlist is NOT latest! Fetching now");
-
-		GetBanlistFromMasterserver();
-		while (m_RequestingRemoteBanlist)
+	/*
+		UpdateBanlistVersionStringFromMasterserver();
+		while (m_RequestingRemoteBanlistVersion)
 			Sleep(100);
-		g_ServerBanSystem->ParseRemoteBanlistString(RemoteBanlistString);
+		if(LocalBanlistVersion != RemoteBanlistVersion)
+		{
+			spdlog::info("Banlist is NOT latest! Fetching now");
 
-	}
-	else
-	{
-		spdlog::info("Local banlist version is latest!");
-	}
-	*/
+			GetBanlistFromMasterserver();
+			while (m_RequestingRemoteBanlist)
+				Sleep(100);
+			g_ServerBanSystem->ParseRemoteBanlistString(RemoteBanlistString);
+
+		}
+		else
+		{
+			spdlog::info("Local banlist version is latest!");
+		}
+		*/
 }
 
-void MasterServerManager::GetBanlistFromMasterserver() 
+void MasterServerManager::GetBanlistFromMasterserver()
 {
 	std::thread requestThread(
 		[this]()
@@ -909,17 +910,17 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 
 void MasterServerManager::InitRemoteBanlistThread(int interval)
 {
-	
+
 	spdlog::info("RemoteBanlistThread timer initialized with update interval of {}", interval);
 	std::thread RemoteBanlistThread([interval]
 		{
-			while (true) 
-				{
-					//g_ServerBanSystem->PrintBanlist();
-					g_MasterServerManager->RemoteBanlistProcessingFunc();
-					std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-				}
-			});
+			while (true)
+			{
+				//g_ServerBanSystem->PrintBanlist();
+				g_MasterServerManager->RemoteBanlistProcessingFunc();
+				std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+			}
+		});
 
 	RemoteBanlistThread.detach();
 }
@@ -1352,10 +1353,10 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 	Cvar_hostname->m_StringLength = Cvar_ns_server_name->m_StringLength;
 	// This calls the function that converts unicode strings from servername and serverdesc to UTF-8
 	UpdateServerInfoFromUnicodeToUTF8();
-	bool shouldDoGlobalBan = strstr(GetCommandLineA(), "-enablewac");
-	if (shouldDoGlobalBan) 
+	//bool shouldDoGlobalBan = !strstr(GetCommandLineA(), "-disableglobalbanlist");
+	if (!strstr(GetCommandLineA(), "-disableglobalbanlist") && strstr(GetCommandLineA(), "-dedicated"))
 	{
-		g_MasterServerManager->InitRemoteBanlistThread(30000);
+		g_MasterServerManager->InitRemoteBanlistThread(1000);
 	}
 	g_MasterServerManager->AddSelfToServerList(
 		Cvar_hostport->m_nValue, Cvar_ns_player_auth_port->m_nValue, Cvar_ns_server_name->m_pszString, Cvar_ns_server_desc->m_pszString,
