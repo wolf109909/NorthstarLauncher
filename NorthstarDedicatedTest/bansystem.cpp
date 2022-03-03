@@ -153,46 +153,8 @@ void ServerBanSystem::OpenBanlist()
 }
 
 
-void ServerBanSystem::ParseRemoteBanlistString(std::string banlisttring)
-{	
-	//spdlog::info("Parsing remote banlist!");
-	//std::getline(std::cin, banlisttring);
-	std::stringstream banliststream(banlisttring + "\n");
-	uint64_t uid;
-	//m_vBannedUids.clear();
-	//load banned UIDs from file
-	std::ifstream enabledModsStream(GetNorthstarPrefix() + "/banlist.txt");
-	std::stringstream enabledModsStringStream;
-	if (!enabledModsStream.fail())
-	{
-		std::string line;
-		m_vBannedUids.clear();//clear currently running bannedUID vec
-		while (std::getline(enabledModsStream, line))
-			m_vBannedUids.push_back(strtoll(line.c_str(), nullptr, 10));
-		
-		while (banliststream >> uid)
-		{
-			//spdlog::info("{}has been inserted into m_vBannedUids! ",uid);
-			InsertBanUID(uid);
-		}
-		g_MasterServerManager->LocalBanlistVersion = g_MasterServerManager->RemoteBanlistVersion;
-		banliststream.clear();
-		banliststream.seekg(0);
-		enabledModsStream.close();
 
-	}
-	//Add Remote BannedUIDs from Masterserver, without overwrtiing actual banlist.txt
-	
-	
-}
 
-void ServerBanSystem::PrintBanlist() 
-{
-	//spdlog::info("Localbanlist:");
-
-	for (int i = 0; i < m_vBannedUids.size(); i++)
-		spdlog::info("Localbanlist:{}" ,m_vBannedUids.at(i));
-}
 
 void ServerBanSystem::ClearBanlist()
 {
@@ -203,18 +165,6 @@ void ServerBanSystem::ClearBanlist()
 	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary);
 }
 
-void ServerBanSystem::InsertBanUID(uint64_t uid) 
-{
-	auto findResult = std::find(m_vBannedUids.begin(), m_vBannedUids.end(), uid);
-	if (findResult == m_vBannedUids.end()) {
-		//cannot find UID in m_vBannedUids, perform ban
-		m_vBannedUids.push_back(uid);
-	}
-	else
-	{
-		spdlog::info("Bypassing Incoming Ban from masterserver:{}, Player is already banned!", uid);
-	}
-}
 
 void ServerBanSystem::BanUID(uint64_t uid)
 {
