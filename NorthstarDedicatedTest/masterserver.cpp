@@ -107,8 +107,8 @@ std::string unescape_unicode(const std::string& str)
 
 void UpdateServerInfoFromUnicodeToUTF8()
 {
-	g_MasterServerManager->ns_auth_srvName = unescape_unicode(Cvar_ns_server_name->m_pszString);
-	g_MasterServerManager->ns_auth_srvDesc = unescape_unicode(Cvar_ns_server_desc->m_pszString);
+	g_MasterServerManager->ns_auth_srvName = unescape_unicode(Cvar_ns_server_name->GetString());
+	g_MasterServerManager->ns_auth_srvDesc = unescape_unicode(Cvar_ns_server_desc->GetString());
 }
 
 const char* HttplibErrorToString(httplib::Error error)
@@ -417,13 +417,13 @@ void MasterServerManager::RequestServerList()
 			m_requestingServerList = true;
 			m_scriptRequestingServerList = true;
 
-			spdlog::info("Requesting server list from {}", Cvar_ns_masterserver_hostname->m_pszString);
+			spdlog::info("Requesting server list from {}", Cvar_ns_masterserver_hostname->GetString());
 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
 
 			std::string readBuffer;
-			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/servers", Cvar_ns_masterserver_hostname->m_pszString).c_str());
+			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/servers", Cvar_ns_masterserver_hostname->GetString()).c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
@@ -571,7 +571,7 @@ void MasterServerManager::RequestMainMenuPromos()
 
 			std::string readBuffer;
 			curl_easy_setopt(
-				curl, CURLOPT_URL, fmt::format("{}/client/mainmenupromos", Cvar_ns_masterserver_hostname->m_pszString).c_str());
+				curl, CURLOPT_URL, fmt::format("{}/client/mainmenupromos", Cvar_ns_masterserver_hostname->GetString()).c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
@@ -689,7 +689,7 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 			std::string readBuffer;
 			curl_easy_setopt(
 				curl, CURLOPT_URL,
-				fmt::format("{}/client/auth_with_self?id={}&playerToken={}", Cvar_ns_masterserver_hostname->m_pszString, uidStr, tokenStr)
+				fmt::format("{}/client/auth_with_self?id={}&playerToken={}", Cvar_ns_masterserver_hostname->GetString(), uidStr, tokenStr)
 					.c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
@@ -830,7 +830,7 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 				curl_easy_setopt(
 					curl, CURLOPT_URL,
 					fmt::format(
-						"{}/client/auth_with_server?id={}&playerToken={}&server={}&password={}", Cvar_ns_masterserver_hostname->m_pszString,
+						"{}/client/auth_with_server?id={}&playerToken={}&server={}&password={}", Cvar_ns_masterserver_hostname->GetString(),
 						uidStr, tokenStr, serverIdStr, escapedPassword)
 						.c_str());
 
@@ -928,10 +928,10 @@ void MasterServerManager::InitRemoteBanlistThread(int interval)
 void MasterServerManager::AddSelfToServerList(
 	int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password)
 {
-	if (!Cvar_ns_report_server_to_masterserver->m_nValue)
+	if (!Cvar_ns_report_server_to_masterserver->GetBool())
 		return;
 
-	if (!Cvar_ns_report_sp_server_to_masterserver->m_nValue && !strncmp(map, "sp_", 3))
+	if (!Cvar_ns_report_sp_server_to_masterserver->GetBool() && !strncmp(map, "sp_", 3))
 	{
 		m_bRequireClientAuth = false;
 		return;
@@ -981,7 +981,7 @@ void MasterServerManager::AddSelfToServerList(
 					curl, CURLOPT_URL,
 					fmt::format(
 						"{}/server/add_server?port={}&authPort={}&name={}&description={}&map={}&playlist={}&maxPlayers={}&password={}",
-						Cvar_ns_masterserver_hostname->m_pszString, port, authPort, nameEscaped, descEscaped, mapEscaped, playlistEscaped,
+						Cvar_ns_masterserver_hostname->GetString(), port, authPort, nameEscaped, descEscaped, mapEscaped, playlistEscaped,
 						maxPlayers, passwordEscaped)
 						.c_str());
 
@@ -1048,6 +1048,10 @@ void MasterServerManager::AddSelfToServerList(
 					{
 						Sleep(5000);
 
+						// defensive check, as m_ownServer could be set to null during the Sleep(5000) above
+						if (!*m_ownServerId)
+							return;
+
 						do
 						{
 							CURL* curl = curl_easy_init();
@@ -1066,7 +1070,7 @@ void MasterServerManager::AddSelfToServerList(
 								char* escapedDescNew = curl_easy_escape(curl, g_MasterServerManager->ns_auth_srvDesc.c_str(), NULL);
 								char* escapedMapNew = curl_easy_escape(curl, g_pHostState->m_levelName, NULL);
 								char* escapedPlaylistNew = curl_easy_escape(curl, GetCurrentPlaylistName(), NULL);
-								char* escapedPasswordNew = curl_easy_escape(curl, Cvar_ns_server_password->m_pszString, NULL);
+								char* escapedPasswordNew = curl_easy_escape(curl, Cvar_ns_server_password->GetString(), NULL);
 
 								int maxPlayers = 6;
 								char* maxPlayersVar = GetCurrentPlaylistVar("max_players", false);
@@ -1079,8 +1083,8 @@ void MasterServerManager::AddSelfToServerList(
 										"{}/server/"
 										"update_values?id={}&port={}&authPort={}&name={}&description={}&map={}&playlist={}&playerCount={}&"
 										"maxPlayers={}&password={}",
-										Cvar_ns_masterserver_hostname->m_pszString, m_ownServerId, Cvar_hostport->m_nValue,
-										Cvar_ns_player_auth_port->m_nValue, escapedNameNew, escapedDescNew, escapedMapNew,
+										Cvar_ns_masterserver_hostname->GetString(), m_ownServerId, Cvar_hostport->GetInt(),
+										Cvar_ns_player_auth_port->GetInt(), escapedNameNew, escapedDescNew, escapedMapNew,
 										escapedPlaylistNew, g_ServerAuthenticationManager->m_additionalPlayerData.size(), maxPlayers,
 										escapedPasswordNew)
 										.c_str());
@@ -1103,6 +1107,11 @@ void MasterServerManager::AddSelfToServerList(
 							curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
 
 							CURLcode result = curl_easy_perform(curl);
+
+							// defensive check, as m_ownServerId could be set to null before this request gets processed
+							if (!*m_ownServerId)
+								return;
+
 							if (result == CURLcode::CURLE_OK)
 							{
 								rapidjson_document serverAddedJson;
@@ -1178,7 +1187,7 @@ void MasterServerManager::UpdateServerMapAndPlaylist(char* map, char* playlist, 
 				curl_easy_setopt(
 					curl, CURLOPT_URL,
 					fmt::format(
-						"{}/server/update_values?id={}&map={}&playlist={}&maxPlayers={}", Cvar_ns_masterserver_hostname->m_pszString,
+						"{}/server/update_values?id={}&map={}&playlist={}&maxPlayers={}", Cvar_ns_masterserver_hostname->GetString(),
 						m_ownServerId, mapEscaped, playlistEscaped, maxPlayers)
 						.c_str());
 
@@ -1218,7 +1227,7 @@ void MasterServerManager::UpdateServerPlayerCount(int playerCount)
 			curl_easy_setopt(
 				curl, CURLOPT_URL,
 				fmt::format(
-					"{}/server/update_values?id={}&playerCount={}", Cvar_ns_masterserver_hostname->m_pszString, m_ownServerId, playerCount)
+					"{}/server/update_values?id={}&playerCount={}", Cvar_ns_masterserver_hostname->GetString(), m_ownServerId, playerCount)
 					.c_str());
 
 			CURLcode result = curl_easy_perform(curl);
@@ -1257,7 +1266,7 @@ void MasterServerManager::WritePlayerPersistentData(char* playerId, char* pdata,
 			curl_easy_setopt(
 				curl, CURLOPT_URL,
 				fmt::format(
-					"{}/accounts/write_persistence?id={}&serverId={}", Cvar_ns_masterserver_hostname->m_pszString, strPlayerId,
+					"{}/accounts/write_persistence?id={}&serverId={}", Cvar_ns_masterserver_hostname->GetString(), strPlayerId,
 					m_ownServerId)
 					.c_str());
 			curl_easy_setopt(curl, CURLOPT_POST, 1L);
@@ -1292,7 +1301,7 @@ void MasterServerManager::WritePlayerPersistentData(char* playerId, char* pdata,
 void MasterServerManager::RemoveSelfFromServerList()
 {
 	// dont call this if we don't have a server id
-	if (!*m_ownServerId || !Cvar_ns_report_server_to_masterserver->m_nValue)
+	if (!*m_ownServerId || !Cvar_ns_report_server_to_masterserver->GetBool())
 		return;
 
 	std::thread requestThread(
@@ -1307,8 +1316,9 @@ void MasterServerManager::RemoveSelfFromServerList()
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 			curl_easy_setopt(
 				curl, CURLOPT_URL,
-				fmt::format("{}/server/remove_server?id={}", Cvar_ns_masterserver_hostname->m_pszString, m_ownServerId).c_str());
+				fmt::format("{}/server/remove_server?id={}", Cvar_ns_masterserver_hostname->GetString(), m_ownServerId).c_str());
 
+			*m_ownServerId = 0;
 			CURLcode result = curl_easy_perform(curl);
 
 			if (result == CURLcode::CURLE_OK)
@@ -1349,8 +1359,7 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 		maxPlayers = std::stoi(maxPlayersVar);
 
 	// Copy new server name cvar to source
-	Cvar_hostname->m_pszString = Cvar_ns_server_name->m_pszString;
-	Cvar_hostname->m_StringLength = Cvar_ns_server_name->m_StringLength;
+	Cvar_hostname->SetValue(Cvar_ns_server_name->GetString());
 	// This calls the function that converts unicode strings from servername and serverdesc to UTF-8
 	UpdateServerInfoFromUnicodeToUTF8();
 	//bool shouldDoGlobalBan = !strstr(GetCommandLineA(), "-disableglobalbanlist");
@@ -1359,8 +1368,9 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 		g_MasterServerManager->InitRemoteBanlistThread(1000);
 	}
 	g_MasterServerManager->AddSelfToServerList(
-		Cvar_hostport->m_nValue, Cvar_ns_player_auth_port->m_nValue, Cvar_ns_server_name->m_pszString, Cvar_ns_server_desc->m_pszString,
-		hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers, Cvar_ns_server_password->m_pszString);
+		Cvar_hostport->GetInt(), Cvar_ns_player_auth_port->GetInt(), (char*)Cvar_ns_server_name->GetString(),
+		(char*)Cvar_ns_server_desc->GetString(), hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers,
+		(char*)Cvar_ns_server_password->GetString());
 	g_ServerAuthenticationManager->StartPlayerAuthServer();
 	g_ServerAuthenticationManager->m_bNeedLocalAuthForNewgame = false;
 }
@@ -1411,15 +1421,15 @@ MasterServerManager::MasterServerManager() : m_pendingConnectionInfo{}, m_ownSer
 
 void InitialiseSharedMasterServer(HMODULE baseAddress)
 {
-	Cvar_ns_masterserver_hostname = RegisterConVar("ns_masterserver_hostname", "127.0.0.1", FCVAR_NONE, "");
+	Cvar_ns_masterserver_hostname = new ConVar("ns_masterserver_hostname", "127.0.0.1", FCVAR_NONE, "");
 	// unfortunately lib doesn't let us specify a port and still have https work
-	// Cvar_ns_masterserver_port = RegisterConVar("ns_masterserver_port", "8080", FCVAR_NONE, "");
+	// Cvar_ns_masterserver_port = new ConVar("ns_masterserver_port", "8080", FCVAR_NONE, "");
 
-	Cvar_ns_server_name = RegisterConVar("ns_server_name", "Unnamed Northstar Server", FCVAR_GAMEDLL, "");
-	Cvar_ns_server_desc = RegisterConVar("ns_server_desc", "Default server description", FCVAR_GAMEDLL, "");
-	Cvar_ns_server_password = RegisterConVar("ns_server_password", "", FCVAR_GAMEDLL, "");
-	Cvar_ns_report_server_to_masterserver = RegisterConVar("ns_report_server_to_masterserver", "1", FCVAR_GAMEDLL, "");
-	Cvar_ns_report_sp_server_to_masterserver = RegisterConVar("ns_report_sp_server_to_masterserver", "0", FCVAR_GAMEDLL, "");
+	Cvar_ns_server_name = new ConVar("ns_server_name", "Unnamed Northstar Server", FCVAR_GAMEDLL, "");
+	Cvar_ns_server_desc = new ConVar("ns_server_desc", "Default server description", FCVAR_GAMEDLL, "");
+	Cvar_ns_server_password = new ConVar("ns_server_password", "", FCVAR_GAMEDLL, "");
+	Cvar_ns_report_server_to_masterserver = new ConVar("ns_report_server_to_masterserver", "1", FCVAR_GAMEDLL, "");
+	Cvar_ns_report_sp_server_to_masterserver = new ConVar("ns_report_sp_server_to_masterserver", "0", FCVAR_GAMEDLL, "");
 
 	Cvar_hostname = *(ConVar**)((char*)baseAddress + 0x1315bae8);
 

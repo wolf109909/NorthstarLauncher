@@ -5,6 +5,7 @@
 #include <sstream>
 #include <fstream>
 #include <Shlwapi.h>
+#include <iostream>
 
 namespace fs = std::filesystem;
 
@@ -20,6 +21,8 @@ HMODULE hTier0Module;
 
 wchar_t exePath[4096];
 wchar_t buffer[8192];
+
+bool noLoadPlugins = false;
 
 DWORD GetProcessByName(std::wstring processName)
 {
@@ -139,10 +142,15 @@ void EnsureOriginStarted()
 		return;
 	}
 
+	printf("[*] Starting Origin...\n");
+
 	PROCESS_INFORMATION pi;
 	memset(&pi, 0, sizeof(pi));
 	STARTUPINFO si;
 	memset(&si, 0, sizeof(si));
+	si.cb = sizeof(STARTUPINFO);
+	si.dwFlags = STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_MINIMIZE;
 	CreateProcessA(
 		originPath, (char*)"", NULL, NULL, false, CREATE_DEFAULT_ERROR_MODE | CREATE_NEW_PROCESS_GROUP, NULL, NULL, (LPSTARTUPINFOA)&si,
 		&pi);
@@ -222,8 +230,21 @@ bool LoadNorthstar()
 			return false;
 		}
 	}
-
 	((bool (*)())Hook_Init)();
+
+	FARPROC LoadPlugins = nullptr;
+	if (!noLoadPlugins)
+	{
+		LoadPlugins = GetProcAddress(hHookModule, "LoadPlugins");
+		if (!hHookModule || LoadPlugins == nullptr)
+		{
+			printf("Failed to get function pointer to LoadPlugins of Northstar.dll\n");
+			LibraryLoadError(GetLastError(), L"Northstar.dll", buffer);
+			return false;
+		}
+		((bool (*)())LoadPlugins)();
+	}
+
 	return true;
 }
 
@@ -242,6 +263,7 @@ HMODULE LoadDediStub(const char* name)
 
 int main(int argc, char* argv[])
 {
+
 	if (!GetExePathWide(exePath, sizeof(exePath)))
 	{
 		MessageBoxA(
@@ -261,9 +283,13 @@ int main(int argc, char* argv[])
 			dedicated = true;
 		else if (!strcmp(argv[i], "-nostubs"))
 			nostubs = true;
+		else if (!strcmp(argv[i], "-noplugins"))
+			noLoadPlugins = true;
 
 	if (!noOriginStartup && !dedicated)
+	{
 		EnsureOriginStarted();
+	}
 
 	if (dedicated && !nostubs)
 	{
@@ -312,6 +338,21 @@ int main(int argc, char* argv[])
 	{
 		PrependPath();
 
+		if (!fs::exists("ns_startup_args.txt"))
+		{
+			std::ofstream file("ns_startup_args.txt");
+			std::string defaultArgs = "-multiple";
+			file.write(defaultArgs.c_str(), defaultArgs.length());
+			file.close();
+		}
+		if (!fs::exists("ns_startup_args_dedi.txt"))
+		{
+			std::ofstream file("ns_startup_args_dedi.txt");
+			std::string defaultArgs = "+setplaylist private_match";
+			file.write(defaultArgs.c_str(), defaultArgs.length());
+			file.close();
+		}
+
 		printf("[*] Loading tier0.dll\n");
 		swprintf_s(buffer, L"%s\\bin\\x64_retail\\tier0.dll", exePath);
 		hTier0Module = LoadLibraryExW(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
@@ -349,6 +390,7 @@ int main(int argc, char* argv[])
 			0);
 	// auto result = ((__int64(__fastcall*)())LauncherMain)();
 	// auto result = ((signed __int64(__fastcall*)(__int64))LauncherMain)(0i64);
+
 	return ((int(/*__fastcall*/*)(HINSTANCE, HINSTANCE, LPSTR, int))LauncherMain)(
 		NULL, NULL, NULL, 0); // the parameters aren't really used anyways
 }

@@ -110,16 +110,21 @@
     <ClInclude Include="audio.h" />
     <ClInclude Include="bansystem.h" />
     <ClInclude Include="bitbuf.h" />
+    <ClInclude Include="bits.h" />
     <ClInclude Include="buildainfile.h" />
     <ClInclude Include="chatcommand.h" />
     <ClInclude Include="clientchathooks.h" />
     <ClInclude Include="localchatwriter.h" />
+    <ClInclude Include="plugins.h" />
+    <ClInclude Include="plugin_abi.h" />
     <ClInclude Include="serverchathooks.h" />
     <ClInclude Include="clientauthhooks.h" />
+    <ClInclude Include="color.h" />
     <ClInclude Include="concommand.h" />
     <ClInclude Include="configurables.h" />
     <ClInclude Include="context.h" />
     <ClInclude Include="convar.h" />
+    <ClInclude Include="cvar.h" />
     <ClInclude Include="dedicated.h" />
     <ClInclude Include="dedicatedmaterialsystem.h" />
     <ClInclude Include="filesystem.h" />
@@ -548,14 +553,17 @@
     <ClInclude Include="scriptserverbrowser.h" />
     <ClInclude Include="scriptsrson.h" />
     <ClInclude Include="serverauthentication.h" />
+    <ClInclude Include="scriptservertoclientstringcommand.h" />
     <ClInclude Include="sigscanning.h" />
     <ClInclude Include="sourceconsole.h" />
     <ClInclude Include="sourceinterface.h" />
     <ClInclude Include="squirrel.h" />
+    <ClInclude Include="state.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="audio.cpp" />
     <ClCompile Include="bansystem.cpp" />
+    <ClCompile Include="bits.cpp" />
     <ClCompile Include="buildainfile.cpp" />
     <ClCompile Include="chatcommand.cpp" />
     <ClCompile Include="clientauthhooks.cpp" />
@@ -564,6 +572,7 @@
     <ClCompile Include="configurables.cpp" />
     <ClCompile Include="context.cpp" />
     <ClCompile Include="convar.cpp" />
+    <ClCompile Include="cvar.cpp" />
     <ClCompile Include="dedicated.cpp" />
     <ClCompile Include="dedicatedmaterialsystem.cpp" />
     <ClCompile Include="dllmain.cpp" />
@@ -590,6 +599,7 @@
     </ClCompile>
     <ClCompile Include="pdef.cpp" />
     <ClCompile Include="playlist.cpp" />
+    <ClCompile Include="plugins.cpp" />
     <ClCompile Include="rpakfilesystem.cpp" />
     <ClCompile Include="scriptbrowserhooks.cpp" />
     <ClCompile Include="scriptmainmenupromos.cpp" />
@@ -600,6 +610,7 @@
     <ClCompile Include="serverauthentication.cpp" />
     <ClCompile Include="miscserverscript.cpp" />
     <ClCompile Include="serverchathooks.cpp" />
+    <ClCompile Include="scriptservertoclientstringcommand.cpp" />
     <ClCompile Include="sigscanning.cpp" />
     <ClCompile Include="sourceconsole.cpp" />
     <ClCompile Include="sourceinterface.cpp" />

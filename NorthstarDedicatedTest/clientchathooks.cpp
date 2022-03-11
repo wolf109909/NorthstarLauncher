@@ -18,31 +18,40 @@ struct ChatTags
 static void CHudChat__AddGameLineHook(void* self, const char* message, int inboxId, bool isTeam, bool isDead)
 {
 	// This hook is called for each HUD, but we only want our logic to run once.
-	if (!IsFirstHud(self))
+	if (self != *CHudChat::allHuds)
 	{
 		return;
 	}
 
-	int senderId = inboxId & CUSTOM_MESSAGE_INDEX_MASK;
-	bool isAnonymous = senderId == 0;
-	bool isCustom = isAnonymous || (inboxId & CUSTOM_MESSAGE_INDEX_BIT);
-
-	// Type is set to 0 for non-custom messages, custom messages have a type encoded as the first byte
-	int type = 0;
-	const char* payload = message;
-	if (isCustom)
+	if (g_ClientSquirrelManager->setupfunc("CHudChat_ProcessMessageStartThread") != SQRESULT_ERROR)
 	{
-		type = message[0];
-		payload = message + 1;
-	}
+		int senderId = inboxId & CUSTOM_MESSAGE_INDEX_MASK;
+		bool isAnonymous = senderId == 0;
+		bool isCustom = isAnonymous || (inboxId & CUSTOM_MESSAGE_INDEX_BIT);
 
-	g_ClientSquirrelManager->setupfunc("CHudChat_ProcessMessageStartThread");
-	g_ClientSquirrelManager->pusharg((int)senderId - 1);
-	g_ClientSquirrelManager->pusharg(payload);
-	g_ClientSquirrelManager->pusharg(isTeam);
-	g_ClientSquirrelManager->pusharg(isDead);
-	g_ClientSquirrelManager->pusharg(type);
-	g_ClientSquirrelManager->call(5);
+		// Type is set to 0 for non-custom messages, custom messages have a type encoded as the first byte
+		int type = 0;
+		const char* payload = message;
+		if (isCustom)
+		{
+			type = message[0];
+			payload = message + 1;
+		}
+
+		g_ClientSquirrelManager->pusharg((int)senderId - 1);
+		g_ClientSquirrelManager->pusharg(payload);
+		g_ClientSquirrelManager->pusharg(isTeam);
+		g_ClientSquirrelManager->pusharg(isDead);
+		g_ClientSquirrelManager->pusharg(type);
+		g_ClientSquirrelManager->call(5);
+	}
+	else
+	{
+		for (CHudChat* hud = *CHudChat::allHuds; hud != NULL; hud = hud->next)
+		{
+			CHudChat__AddGameLine(hud, message, inboxId, isTeam, isDead);
+		}
+	}
 }
 
 // void NSChatWrite( int context, string str )
