@@ -117,7 +117,7 @@ class MasterServerManager
 	void ClearServerList();
 	void RequestServerList();
 	void RequestMainMenuPromos();
-	void AuthenticateOriginWithMasterServer(char* uid, char* originToken,char* playerName);
+	void AuthenticateOriginWithMasterServer(char* uid, char* originToken,const char* playerName);
 	void AuthenticateWithOwnServer(char* uid, char* playerToken);
 	void AuthenticateWithServer(char* uid, char* playerToken, char* serverId, char* password);
 	void
@@ -136,4 +136,5 @@ void UpdateServerInfoFromUnicodeToUTF8();
 void InitialiseSharedMasterServer(HMODULE baseAddress);
 extern MasterServerManager* g_MasterServerManager;
 extern ConVar* Cvar_ns_masterserver_hostname;
+extern ConVar* Cvar_ns_server_password;
 //extern size_t CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb, void* userp);

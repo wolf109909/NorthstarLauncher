@@ -207,6 +207,7 @@ bool InitialiseNorthstar()
 	AddDllLoadCallback("engine.dll", InitialiseEngineGameUtilFunctions);
 	AddDllLoadCallback("server.dll", InitialiseServerGameUtilFunctions);
 
+	//AddDllLoadCallback("engine.dll", InitialiseSPMPHackFunctions);
 	// dedi patches
 	{
 		AddDllLoadCallback("tier0.dll", InitialiseDedicatedOrigin);

@@ -232,12 +232,12 @@ void MasterServerManager::GetBanlistFromMasterserver()
 
 			m_RequestingRemoteBanlist = true;
 
-			//spdlog::info("Fetching banlist content from {}", Cvar_ns_masterserver_hostname->m_pszString);
+			//spdlog::info("Fetching banlist content from {}", Cvar_ns_masterserver_hostname->GetString());
 
 			CURL* curl = curl_easy_init();
 
 			std::string readBuffer;
-			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/banlist", Cvar_ns_masterserver_hostname->m_pszString).c_str());
+			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/banlist", Cvar_ns_masterserver_hostname->GetString()).c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
@@ -279,12 +279,12 @@ void MasterServerManager::UpdateBanlistVersionStringFromMasterserver()
 
 			m_RequestingRemoteBanlistVersion = true;
 
-			//spdlog::info("Requesting banlist version from {}", Cvar_ns_masterserver_hostname->m_pszString);
+			//spdlog::info("Requesting banlist version from {}", Cvar_ns_masterserver_hostname->GetString());
 
 			CURL* curl = curl_easy_init();
 
 			std::string readBuffer;
-			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/update_banlist", Cvar_ns_masterserver_hostname->m_pszString).c_str());
+			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/update_banlist", Cvar_ns_masterserver_hostname->GetString()).c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
@@ -325,7 +325,7 @@ void MasterServerManager::UpdateBanlistVersionStringFromMasterserver()
 
 }
 
-void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* originToken, char* playerName)
+void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* originToken,const char* playerName)
 {
 	if (m_bOriginAuthWithMasterServerInProgress)
 		return;
@@ -348,7 +348,7 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 			std::string readBuffer;
 			curl_easy_setopt(
 				curl, CURLOPT_URL,
-				fmt::format("{}/client/origin_auth?id={}&token={}&playerName={}", Cvar_ns_masterserver_hostname->m_pszString, uidStr, tokenStr, nameStr).c_str());
+				fmt::format("{}/client/origin_auth?id={}&token={}&playerName={}", Cvar_ns_masterserver_hostname->GetString(), uidStr, tokenStr, nameStr).c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
@@ -1351,7 +1351,11 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 		Cbuf_Execute();
 	}
 
+	FuckSPHackFunction();
+
 	CHostState__State_NewGame(hostState);
+
+
 
 	int maxPlayers = 6;
 	char* maxPlayersVar = GetCurrentPlaylistVar("max_players", false);
@@ -1391,6 +1395,7 @@ void CHostState__State_ChangeLevelMPHook(CHostState* hostState)
 	}
 
 	g_MasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers);
+	FuckSPHackFunction();
 	CHostState__State_ChangeLevelMP(hostState);
 }
 
@@ -1406,7 +1411,9 @@ void CHostState__State_ChangeLevelSPHook(CHostState* hostState)
 		maxPlayers = std::stoi(maxPlayersVar);
 
 	g_MasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers);
+	FuckSPHackFunction();
 	CHostState__State_ChangeLevelSP(hostState);
+	
 }
 
 void CHostState__State_GameShutdownHook(CHostState* hostState)

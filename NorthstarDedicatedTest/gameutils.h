@@ -225,6 +225,9 @@ extern GetCurrentPlaylistVarType GetCurrentPlaylistVar;
 typedef void* (*Server_GetEntityByIndexType)(int index);
 extern Server_GetEntityByIndexType Server_GetEntityByIndex;
 
+// SPMP Hack stuff
+//extern int* SPMPHack_GAMETYPE;
+
 // server tickrate stuff
 extern ConVar* Cvar_base_tickinterval_mp;
 extern ConVar* Cvar_base_tickinterval_sp;
@@ -255,3 +258,4 @@ extern GetBaseLocalClientType GetBaseLocalClient;
 void InitialiseEngineGameUtilFunctions(HMODULE baseAddress);
 void InitialiseServerGameUtilFunctions(HMODULE baseAddress);
 void InitialiseTier0GameUtilFunctions(HMODULE baseAddress);
+extern void FuckSPHackFunction();

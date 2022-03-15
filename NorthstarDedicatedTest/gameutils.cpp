@@ -90,6 +90,50 @@ void InitialiseEngineGameUtilFunctions(HMODULE baseAddress)
 	Cvar_communities_hostname = (ConVar*)((char*)baseAddress + 0x13157E50);
 }
 
+void FuckSPHackFunction()
+{
+	if (!strstr(GetCommandLineA(), "-fucksp"))
+		return;
+	if (!strncmp(g_pHostState->m_levelName, "sp_", 3)) 
+	{
+		spdlog::warn("Applying FUCK SP patch!");
+		{
+			char* ptr = (char*)GetModuleHandleA("engine.dll") + 0x156C43;
+			TempReadWrite rw(ptr);
+			*ptr = (char)0x01;
+		}
+		{
+			char* ptr = (char*)GetModuleHandleA("engine.dll") + 0x155538;
+			TempReadWrite rw(ptr);
+			*ptr = (char)0x01;
+		}
+	
+	}
+	else 
+	{
+		spdlog::warn("FUCK SP patch bypassed - not SP map!");
+		
+		{
+			char* ptr = (char*)GetModuleHandleA("engine.dll") + 0x156C43;
+			TempReadWrite rw(ptr);
+			if (*ptr != 0x02)
+			{
+				*ptr = (char)0x02;
+			}
+		}
+		{
+			char* ptr = (char*)GetModuleHandleA("engine.dll") + 0x155538;
+			TempReadWrite rw(ptr);
+			if (*ptr != 0x02)
+			{
+				*ptr = (char)0x02;
+			}
+		}
+	}
+		
+	spdlog::warn("current GAMESTATE: {}" , *(std::int32_t*)((std::uintptr_t)GetModuleHandleA("engine.dll") + 0x7c6fa8));
+}
+
 void InitialiseServerGameUtilFunctions(HMODULE baseAddress)
 {
 	Server_GetEntityByIndex = (Server_GetEntityByIndexType)((char*)baseAddress + 0xFB820);
