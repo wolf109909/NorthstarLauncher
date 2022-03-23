@@ -2,7 +2,7 @@
 #include "hooks.h"
 #include "hookutils.h"
 #include "sigscanning.h"
-
+#include <string>
 #include <wchar.h>
 #include <iostream>
 #include <vector>
@@ -31,6 +31,11 @@ LoadLibraryExAType LoadLibraryExAOriginal;
 LoadLibraryAType LoadLibraryAOriginal;
 LoadLibraryExWType LoadLibraryExWOriginal;
 LoadLibraryWType LoadLibraryWOriginal;
+
+
+bool isDllSignatureLoaded = false;
+std::vector<std::string> blacklistedDlls;
+
 
 void InstallInitialHooks()
 {
@@ -118,6 +123,107 @@ struct DllLoadCallback
 
 std::vector<DllLoadCallback*> dllLoadCallbacks;
 
+std::wstring StringToWString(const std::string& s)
+{
+	std::wstring temp(s.length(), L' ');
+	std::copy(s.begin(), s.end(), temp.begin());
+	return temp;
+}
+
+
+std::string WStringToString(const std::wstring& s)
+{
+	std::string temp(s.length(), ' ');
+	std::copy(s.begin(), s.end(), temp.begin());
+	return temp;
+}
+bool IsDllSignatureSafe(std::string dllname)
+{	
+	if (dllname.substr(dllname.find_last_of(".") + 1) == "dll") 
+	{
+		//spdlog::info("Attempting to sigscan:{}", dllname);
+		void* ptr = FindSignature(dllname, "\x48\x8B\x05\x89\x0F\x00\x00\x81\xF9\x3B\x04\xF7\xC6", "xxxxx??xxxxxx");
+		if (ptr != nullptr)
+		{
+
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+	}
+	else
+	{
+		return true;
+	}
+	
+}
+
+void LoadDllSignatures() 
+{
+
+
+	//blacklist
+	blacklistedDlls.push_back("titan2hook_v1.3_[unknowncheats.me]_.dll");
+	
+	isDllSignatureLoaded = true;
+}
+
+
+void CheckDllBlacklist(LPCSTR lpLibFileName)
+{
+	//spdlog::info("checking Dll:{}", lpLibFileName);
+	// Return true if Dll is not in blacklist
+	if (isDllSignatureLoaded) 
+	{
+
+		std::string filepath = lpLibFileName;
+		std::size_t dirpos = filepath.find_last_of("\\") + 1;
+		std::string file = filepath.substr(dirpos, filepath.length() - dirpos);
+		//auto findResult = std::find(blacklistedDlls.begin(), blacklistedDlls.end(), filepath);
+		if (std::find(blacklistedDlls.begin(), blacklistedDlls.end(), file) != blacklistedDlls.end())
+		{
+			// Dangerous Dll name found
+			//spdlog::info("Malicious Dll found:{}", filepath);
+			MessageBox(NULL, TEXT("Go away.") , TEXT("Northstar has crashed!"), MB_OK | MB_ICONERROR);
+			return;
+		}
+		else 
+		{
+			//spdlog::info("safe Dll found:{}", file);
+			if (IsDllSignatureSafe(file))
+			{
+				return;
+
+
+			}
+			else 
+			{
+			
+				MessageBox(NULL, TEXT("Go away. I said."), TEXT("Northstar has crashed!"), MB_OK | MB_ICONERROR );
+				return;
+			}
+			
+		}
+	}
+
+
+}
+
+
+void CheckDllBlacklistW(LPCWSTR lpLibFileNameW)
+{
+	if (lpLibFileNameW != NULL) 
+	{
+		// Return true if Dll is not in blacklist
+		std::string lpLibFileName = WStringToString(lpLibFileNameW);
+		CheckDllBlacklist(lpLibFileName.c_str());
+	}
+}
+
+
+
 void AddDllLoadCallback(std::string dll, DllLoadCallbackFuncType callback)
 {
 	DllLoadCallback* callbackStruct = new DllLoadCallback;
@@ -181,6 +287,9 @@ void CallAllPendingDLLLoadCallbacks()
 HMODULE LoadLibraryExAHook(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {
 	HMODULE moduleAddress = LoadLibraryExAOriginal(lpLibFileName, hFile, dwFlags);
+	
+
+	CheckDllBlacklist(lpLibFileName);
 
 	if (moduleAddress)
 	{
@@ -193,6 +302,7 @@ HMODULE LoadLibraryExAHook(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 HMODULE LoadLibraryAHook(LPCSTR lpLibFileName)
 {
 	HMODULE moduleAddress = LoadLibraryAOriginal(lpLibFileName);
+	CheckDllBlacklist(lpLibFileName);
 
 	if (moduleAddress)
 	{
@@ -205,6 +315,7 @@ HMODULE LoadLibraryAHook(LPCSTR lpLibFileName)
 HMODULE LoadLibraryExWHook(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {
 	HMODULE moduleAddress = LoadLibraryExWOriginal(lpLibFileName, hFile, dwFlags);
+	CheckDllBlacklistW(lpLibFileName);
 
 	if (moduleAddress)
 	{
@@ -217,6 +328,7 @@ HMODULE LoadLibraryExWHook(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 HMODULE LoadLibraryWHook(LPCWSTR lpLibFileName)
 {
 	HMODULE moduleAddress = LoadLibraryWOriginal(lpLibFileName);
+	CheckDllBlacklistW(lpLibFileName);
 
 	if (moduleAddress)
 	{

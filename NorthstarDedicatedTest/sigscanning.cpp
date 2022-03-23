@@ -16,13 +16,38 @@ size_t GetDLLLength(HMODULE moduleHandle)
 
 	return pe->OptionalHeader.SizeOfImage;
 }
-
+int DecToHex(int p_intValue)
+{
+	int l_intResult;
+	char* l_pCharRes = new (char);
+	sprintf(l_pCharRes, "%X", p_intValue);
+	//spdlog::warn("Size:{}",l_pCharRes);
+	std::stringstream ss;
+	ss << l_pCharRes;
+	ss >> l_intResult;
+	return l_intResult;
+}
+MODULEINFO GetModuleInfo(std::string szModule)
+{
+	MODULEINFO modinfo = { 0 };
+	std::wstring stemp = std::wstring(szModule.begin(), szModule.end());
+	LPCWSTR tempname = stemp.c_str();
+	HMODULE hModule = GetModuleHandle(tempname);
+	if (hModule == 0) return modinfo;
+	GetModuleInformation(GetCurrentProcess(), hModule, &modinfo, sizeof(MODULEINFO));
+	return modinfo;
+}
 void* FindSignature(std::string dllName, const char* sig, const char* mask)
 {
 	HMODULE dllAddress = GetModuleHandleA(dllName.c_str());
-	char* dllEnd = (char*)(dllAddress + GetDLLLength(dllAddress));
-
+	MODULEINFO moduleinfo = GetModuleInfo(dllName);
+	DWORD dllsize = moduleinfo.SizeOfImage;
+	char* dllEnd = (char*)(dllAddress + DecToHex(dllsize));
+	//spdlog::warn("Dll start:{}", dllAddress);
+	//spdlog::warn("Dll size:{}", DecToHex(dllsize));
 	size_t sigLength = strlen(mask);
+	if(dllsize < sigLength)
+		return nullptr;
 
 	for (char* i = (char*)dllAddress; i < dllEnd - sigLength; i++)
 	{

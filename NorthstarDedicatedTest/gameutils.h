@@ -29,6 +29,16 @@ extern IMemAlloc* g_pMemAllocSingleton;
 typedef IMemAlloc* (*CreateGlobalMemAllocType)();
 extern CreateGlobalMemAllocType CreateGlobalMemAlloc;
 
+
+
+
+
+
+
+
+
+
+
 // cmd.h
 enum class ECommandTarget_t
 {
@@ -247,4 +257,3 @@ extern GetBaseLocalClientType GetBaseLocalClient;
 void InitialiseEngineGameUtilFunctions(HMODULE baseAddress);
 void InitialiseServerGameUtilFunctions(HMODULE baseAddress);
 void InitialiseTier0GameUtilFunctions(HMODULE baseAddress);
-extern void FuckSPHackFunction();

@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-
+void LoadDllSignatures();
 void InstallInitialHooks();
 
 typedef void (*DllLoadCallbackFuncType)(HMODULE moduleAddress);

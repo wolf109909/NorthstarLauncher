@@ -330,6 +330,7 @@ void ModManager::LoadMods()
 
 					if (m_hasLoadedMods && modVpk.m_bAutoLoad)
 						(*g_Filesystem)->m_vtable->MountVPK(*g_Filesystem, vpkName.c_str());
+					
 				}
 			}
 		}

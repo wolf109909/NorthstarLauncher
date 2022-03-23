@@ -1351,7 +1351,6 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 		Cbuf_Execute();
 	}
 
-	FuckSPHackFunction();
 
 	CHostState__State_NewGame(hostState);
 
@@ -1395,7 +1394,6 @@ void CHostState__State_ChangeLevelMPHook(CHostState* hostState)
 	}
 
 	g_MasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers);
-	FuckSPHackFunction();
 	CHostState__State_ChangeLevelMP(hostState);
 }
 
@@ -1411,7 +1409,6 @@ void CHostState__State_ChangeLevelSPHook(CHostState* hostState)
 		maxPlayers = std::stoi(maxPlayersVar);
 
 	g_MasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers);
-	FuckSPHackFunction();
 	CHostState__State_ChangeLevelSP(hostState);
 	
 }

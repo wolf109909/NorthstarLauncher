@@ -180,6 +180,7 @@ void ServerBanSystem::UnbanUID(uint64_t uid)
 		return;
 
 	m_vBannedUids.erase(findResult);
+	// InputIterator find (InputIterator first, InputIterator last, const T& val)
 	spdlog::info("{} was unbanned", uid);
 	// todo: this needs to erase from the banlist file
 	// atm unsure how to do this aside from just clearing and fully rewriting the file

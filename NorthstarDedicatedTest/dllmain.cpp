@@ -49,6 +49,8 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/error/en.h"
 
+
+
 typedef void (*initPluginFuncPtr)(void* getPluginObject);
 
 bool initialised = false;
@@ -77,6 +79,21 @@ void WaitForDebugger(HMODULE baseAddress)
 		while (!IsDebuggerPresent())
 			Sleep(100);
 	}
+}
+
+void NoFindWindowHack(HMODULE baseAddress) 
+{
+	unsigned seed = time(0);
+	srand(seed);
+	char ObfChar[3];
+	int ObfuscateNum = 100 + rand() % 899;
+	sprintf(ObfChar, "%d", ObfuscateNum);
+	std::cout << ObfuscateNum << std::endl;
+	char* ptr = ((char*)baseAddress + 0x607BD0);
+	TempReadWrite rw(ptr);
+	*(ptr + 14) = (char)ObfChar[0];
+	*(ptr + 16) = (char)ObfChar[1];
+	*(ptr + 18) = (char)ObfChar[2];
 }
 
 void freeLibrary(HMODULE hLib)
@@ -202,9 +219,12 @@ bool InitialiseNorthstar()
 	InstallInitialHooks();
 	CreateLogFiles();
 	InitialiseInterfaceCreationHooks();
+	LoadDllSignatures();
+
 
 	AddDllLoadCallback("tier0.dll", InitialiseTier0GameUtilFunctions);
 	AddDllLoadCallback("engine.dll", WaitForDebugger);
+	AddDllLoadCallback("engine.dll", NoFindWindowHack); 
 	AddDllLoadCallback("engine.dll", InitialiseEngineGameUtilFunctions);
 	AddDllLoadCallback("server.dll", InitialiseServerGameUtilFunctions);
 
