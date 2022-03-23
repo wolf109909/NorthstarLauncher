@@ -3,6 +3,8 @@
 #include "hookutils.h"
 #include "sigscanning.h"
 #include <string>
+#include "dedicated.h"
+
 #include <wchar.h>
 #include <iostream>
 #include <vector>
@@ -226,6 +228,32 @@ void CheckDllBlacklistW(LPCWSTR lpLibFileNameW)
 
 void AddDllLoadCallback(std::string dll, DllLoadCallbackFuncType callback)
 {
+	DllLoadCallback* callbackStruct = new DllLoadCallback;
+	callbackStruct->dll = dll;
+	callbackStruct->callback = callback;
+	callbackStruct->called = false;
+
+	dllLoadCallbacks.push_back(callbackStruct);
+}
+
+void AddDllLoadCallbackForDedicatedServer(std::string dll, DllLoadCallbackFuncType callback)
+{
+	if (!IsDedicated())
+		return;
+
+	DllLoadCallback* callbackStruct = new DllLoadCallback;
+	callbackStruct->dll = dll;
+	callbackStruct->callback = callback;
+	callbackStruct->called = false;
+
+	dllLoadCallbacks.push_back(callbackStruct);
+}
+
+void AddDllLoadCallbackForClient(std::string dll, DllLoadCallbackFuncType callback)
+{
+	if (IsDedicated())
+		return;
+
 	DllLoadCallback* callbackStruct = new DllLoadCallback;
 	callbackStruct->dll = dll;
 	callbackStruct->callback = callback;
