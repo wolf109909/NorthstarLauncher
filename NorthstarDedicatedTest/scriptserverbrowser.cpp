@@ -4,7 +4,8 @@
 #include "masterserver.h"
 #include "gameutils.h"
 #include "serverauthentication.h"
-
+#include "hooks.h"
+#include "anticheat.h"
 // functions for viewing server browser
 
 // bool function NSIsMasterServerAuthenticated()
@@ -281,10 +282,11 @@ SQRESULT SQ_ClearRecievedServerList(void* sqvm)
 }
 
 // functions for authenticating with servers
-
 // void function NSTryAuthWithServer( int serverIndex, string password = "" )
 SQRESULT SQ_TryAuthWithServer(void* sqvm)
-{
+{	
+
+	g_ClientAnticheatSystem.FindMaliciousWindow();
 	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
 	const SQChar* password = ClientSq_getstring(sqvm, 2);
 

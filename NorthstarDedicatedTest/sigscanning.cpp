@@ -49,7 +49,7 @@ void* FindSignature(std::string dllName, const char* sig, const char* mask)
 	if(dllsize < sigLength)
 		return nullptr;
 
-	for (auto i = dllAddress; i < dllEnd - sigLength + 1; i++)
+	for (char* i = (char*)dllAddress; i < dllEnd - sigLength; i++)
 	{
 		int j = 0;
 		for (; j < sigLength; j++)
@@ -57,7 +57,7 @@ void* FindSignature(std::string dllName, const char* sig, const char* mask)
 				break;
 
 		if (j == sigLength) // loop finished of its own accord
-			return i;
+			return (void*)i;
 	}
 
 	return nullptr;

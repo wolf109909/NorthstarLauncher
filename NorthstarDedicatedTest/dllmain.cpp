@@ -42,14 +42,15 @@
 #include "clientvideooverrides.h"
 #include <string.h>
 #include "pch.h"
-
+#include "anticheat.h"
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/error/en.h"
 #include "ExploitFixes.h"
+#include "anticheat.h"
 
-
+//ClientAnticheatSystem g_ClientAnticheatSystem;
 
 typedef void (*initPluginFuncPtr)(void* getPluginObject);
 
@@ -68,7 +69,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 	return TRUE;
 }
-
+void InitNoFindWindowHack(HMODULE baseAddress)
+{
+	g_ClientAnticheatSystem.NoFindWindowHack(baseAddress);
+}
 void WaitForDebugger(HMODULE baseAddress)
 {
 	// earlier waitfordebugger call than is in vanilla, just so we can debug stuff a little easier
@@ -79,21 +83,6 @@ void WaitForDebugger(HMODULE baseAddress)
 		while (!IsDebuggerPresent())
 			Sleep(100);
 	}
-}
-
-void NoFindWindowHack(HMODULE baseAddress) 
-{
-	unsigned seed = time(0);
-	srand(seed);
-	char ObfChar[3];
-	int ObfuscateNum = 100 + rand() % 899;
-	sprintf(ObfChar, "%d", ObfuscateNum);
-	std::cout << ObfuscateNum << std::endl;
-	char* ptr = ((char*)baseAddress + 0x607BD0);
-	TempReadWrite rw(ptr);
-	*(ptr + 14) = (char)ObfChar[0];
-	*(ptr + 16) = (char)ObfChar[1];
-	*(ptr + 18) = (char)ObfChar[2];
 }
 
 void freeLibrary(HMODULE hLib)
@@ -208,6 +197,7 @@ bool InitialiseNorthstar()
 		return false;
 	}
 
+
 	initialised = true;
 
 	parseConfigurables();
@@ -219,12 +209,12 @@ bool InitialiseNorthstar()
 	InstallInitialHooks();
 	CreateLogFiles();
 	InitialiseInterfaceCreationHooks();
-	LoadDllSignatures();
-
+	g_ClientAnticheatSystem.LoadDllSignatures();
+	
 
 	AddDllLoadCallback("tier0.dll", InitialiseTier0GameUtilFunctions);
+	AddDllLoadCallback("engine.dll", InitNoFindWindowHack);
 	AddDllLoadCallback("engine.dll", WaitForDebugger);
-	AddDllLoadCallback("engine.dll", NoFindWindowHack); 
 	AddDllLoadCallback("engine.dll", InitialiseEngineGameUtilFunctions);
 	AddDllLoadCallback("server.dll", InitialiseServerGameUtilFunctions);
 
