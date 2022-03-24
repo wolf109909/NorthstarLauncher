@@ -14,6 +14,7 @@
 #include "bansystem.h"
 #include <cstring>
 #include <regex>
+#include "anticheat.h"
 // NOTE for anyone reading this: we used to use httplib for requests here, but it had issues, so we're moving to curl now for masterserver
 // requests so httplib is used exclusively for server stuff now
 
@@ -435,6 +436,7 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 					strncpy(m_ownClientAuthToken, originAuthInfo["token"].GetString(), sizeof(m_ownClientAuthToken));
 					m_ownClientAuthToken[sizeof(m_ownClientAuthToken) - 1] = 0;
 					spdlog::info("Northstar origin authentication completed successfully!");
+					g_ClientAnticheatSystem.InitWindowListenerThread();
 				}
 				else
 					spdlog::error("Northstar origin authentication failed");
@@ -962,6 +964,7 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 	requestThread.detach();
 }
 
+
 void MasterServerManager::InitRemoteBanlistThread(int interval)
 {
 
@@ -970,6 +973,7 @@ void MasterServerManager::InitRemoteBanlistThread(int interval)
 		{
 			while (true)
 			{
+
 				//g_ServerBanSystem->PrintBanlist();
 				g_MasterServerManager->RemoteBanlistProcessingFunc();
 				std::this_thread::sleep_for(std::chrono::milliseconds(interval));

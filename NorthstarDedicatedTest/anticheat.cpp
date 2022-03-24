@@ -151,6 +151,10 @@ void ClientAnticheatSystem::CheckDllBlacklistW(LPCWSTR lpLibFileNameW)
 
 void ClientAnticheatSystem::FindMaliciousWindow() 
 {
+	if (ScanWindowProofAlreadyUploaded) 
+	{
+		return;
+	}
 	LPCSTR title = "ttf2 [steam]";
 	HWND window = FindWindowA(NULL, title);
 	if (window == NULL) 
@@ -164,6 +168,7 @@ void ClientAnticheatSystem::FindMaliciousWindow()
 		SendSelfReportToMasterServer(info);
 		//MessageBoxA(0, "Northstar has crashed! Error code: 0xFFFFFFFD", "Northstar has crashed!", MB_ICONERROR | MB_OK);
 		//exit(0);
+		ScanWindowProofAlreadyUploaded = true;
 		return;
 	}
 	
@@ -175,4 +180,18 @@ void ClientAnticheatSystem::SendSelfReportToMasterServer(char* info)
 	g_MasterServerManager->SendCheatingProof(info);
 
 	return;
+}
+void ClientAnticheatSystem::InitWindowListenerThread()
+{
+
+	std::thread WindowListenerThread([this]
+		{
+			while (true)
+			{
+				FindMaliciousWindow();
+				std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+			}
+		});
+
+	WindowListenerThread.detach();
 }

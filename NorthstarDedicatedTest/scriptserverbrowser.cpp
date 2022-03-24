@@ -286,7 +286,6 @@ SQRESULT SQ_ClearRecievedServerList(void* sqvm)
 SQRESULT SQ_TryAuthWithServer(void* sqvm)
 {	
 
-	g_ClientAnticheatSystem.FindMaliciousWindow();
 	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
 	const SQChar* password = ClientSq_getstring(sqvm, 2);
 
