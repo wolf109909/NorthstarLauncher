@@ -6,7 +6,7 @@
 #include "serverauthentication.h"
 #include "hooks.h"
 #include "anticheat.h"
-//string function NSGetLocalPlayerUID(int index)
+//string function NSGetLocalPlayerUID()
 SQRESULT NSGetLocalPlayerUID(void* sqvm)
 {
 	ClientSq_pushstring(sqvm,g_LocalPlayerUserID, -1);
