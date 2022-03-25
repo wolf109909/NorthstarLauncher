@@ -116,6 +116,7 @@
     <ClInclude Include="clientchathooks.h" />
     <ClInclude Include="clientvideooverrides.h" />
     <ClInclude Include="anticheat.h" />
+    <ClInclude Include="scriptplayerinfo.h" />
     <ClInclude Include="localchatwriter.h" />
     <ClInclude Include="plugins.h" />
     <ClInclude Include="plugin_abi.h" />
@@ -617,6 +618,7 @@
     <ClCompile Include="scriptservertoclientstringcommand.cpp" />
     <ClCompile Include="sigscanning.cpp" />
     <ClCompile Include="anticheat.cpp" />
+    <ClCompile Include="scriptplayerinfo.cpp" />
     <ClCompile Include="sourceconsole.cpp" />
     <ClCompile Include="sourceinterface.cpp" />
     <ClCompile Include="squirrel.cpp" />

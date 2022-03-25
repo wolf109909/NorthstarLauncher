@@ -1509,6 +1509,9 @@
     <ClInclude Include="anticheat.h">
       <Filter>Header Files\Shared\Anticheats</Filter>
     </ClInclude>
+    <ClInclude Include="scriptplayerinfo.h">
+      <Filter>Header Files\Shared\Anticheats</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1668,6 +1671,9 @@
       <Filter>Source Files\Shared\Exploit Fixes</Filter>
     </ClCompile>
     <ClCompile Include="anticheat.cpp">
+      <Filter>Source Files\Shared\Anticheats</Filter>
+    </ClCompile>
+    <ClCompile Include="scriptplayerinfo.cpp">
       <Filter>Source Files\Shared\Anticheats</Filter>
     </ClCompile>
   </ItemGroup>

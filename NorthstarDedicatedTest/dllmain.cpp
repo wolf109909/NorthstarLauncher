@@ -49,7 +49,7 @@
 #include "rapidjson/error/en.h"
 #include "ExploitFixes.h"
 #include "anticheat.h"
-
+#include "scriptplayerinfo.h"
 //ClientAnticheatSystem g_ClientAnticheatSystem;
 
 typedef void (*initPluginFuncPtr)(void* getPluginObject);
@@ -241,6 +241,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallbackForClient("engine.dll", InitialiseChatCommands);
 		AddDllLoadCallbackForClient("client.dll", InitialiseScriptModMenu);
 		AddDllLoadCallbackForClient("client.dll", InitialiseScriptServerBrowser);
+		AddDllLoadCallbackForClient("client.dll", InitialiseScriptsPlayerInfo);
 		AddDllLoadCallbackForClient("localize.dll", InitialiseModLocalisation);
 		AddDllLoadCallbackForClient("engine.dll", InitialiseClientAuthHooks);
 		AddDllLoadCallbackForClient("client.dll", InitialiseLatencyFleX);
