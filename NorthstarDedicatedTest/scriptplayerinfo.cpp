@@ -16,6 +16,6 @@ SQRESULT NSGetLocalPlayerUID(void* sqvm)
 void InitialiseScriptsPlayerInfo(HMODULE baseAddress)
 {
 
-	g_UISquirrelManager->AddFuncRegistration("int", "NSGetLocalPlayerUID", "", "", NSGetLocalPlayerUID);
+	g_ClientSquirrelManager->AddFuncRegistration("string", "NSGetLocalPlayerUID", "", "", NSGetLocalPlayerUID);
 
 }
